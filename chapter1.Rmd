@@ -1,13 +1,48 @@
 
 # About the project
 
-*Write a short description about the course and add a link to your GitHub repository here. This is an R Markdown (.Rmd) file so you should use R Markdown syntax.*
+
+
+
+*This course - Introduction to Open Data Science - makes use of the open research tools with open data and how to apply data-driven statistics.*
+
+*Link to my project: https://github.com/SusannaSuntila/IODS-project*
+
+
+
 
 ```{r}
-# This is a so-called "R chunk" where you can write R code.
 
 date()
 
 ```
-The text continues here.
+
+
+## Thoughts about the course
+
+
+I am excited and I only hope that I can keep up with the pace and content of this course, but it all sounds very interesting. I have taken some courses in R, but I have not used it professionally or for that long. I want to become even more familiar in using R and I want to deepen my skills in visualizing, sharing, wrangling, testing and analyzing data. I heard about this course in my previous course for research skills.
+
+
+***
+
+
+## Learning experience with the R book and Exercise set 1
+
+
+* The first exercise was a good introduction, as I was already a bit familiar with the book, but now I could focus on the parts that were more difficult for me, or that I hadn't really used before.
+* Some more simple functions, like filter() or group_by() are something that I will try to make use of even more.
+* In my last R-course I was introduced to **ggplot**, and drawing plots and fine-tuning them was definitely my favorite part of this exercise. I hope to develop my skills on that score during this course.
+* Working with **factors** was also part of the book that I liked, and there were functions that I hadn't used, like summary_factorlist.
+* I haven't really used the tidy() function to tidy up the results of a statistical tests, so reading these chapters was good reminder of that option as well.
+* I haven't done any reshaping of data with regards to the format, especially **tidying from a wide to a long format**. That was a more difficult part of the book for me, but it is definitely something I want to practice.
+* Different statistical tests and plotting data in order to choose the right test was also a more demanding part for me and something that I want to focus on during this course.
+* Many of the functions and approaches used from the **finalfit-package** were more difficult as well, as I haven't used much of those.
+* I like the so called active reading, as it helps to understand better what is happening and also enables to try some changes to the code myself. I think the book is clear and well constructed.
+* I have a lot to learn about using R-markdown, so this has been a good start. There has been quite a lot of new concepts in the first week.
+
+
+
+
+
 
