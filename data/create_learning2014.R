@@ -59,5 +59,6 @@ learning2014 <- filter(learning2014, points > 0)
 library(tidyverse)
 write_csv(learning2014, "learning2014.csv")
 
+read.csv(file.path(".", "data", "learning2014.csv"))
 
 
