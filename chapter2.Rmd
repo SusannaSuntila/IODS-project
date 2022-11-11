@@ -1,4 +1,4 @@
-# Insert chapter 2 title here
+# Regression and model validation
 
 *Describe the work you have done this week and summarize your learning.*
 
@@ -10,4 +10,97 @@
 date()
 ```
 
-Here we go again...
+## Read in the data and describe it
+
+```{r}
+library(tidyverse)
+learning2014 <- read.csv(file.path(".", "data", "learning2014.csv"))
+
+```
+
+
+
+```{r}
+
+# Look at the dimensions of the data
+dim(learning2014)
+
+# Look at the structure of the data
+str(learning2014)
+
+
+```
+
+There are 166 rows and 7 columns in this data. The gender variable is a character, the other variables are numbers or integers.
+
+
+The original data is from a questionnaire that tracked different learning approaches and achievements on an introductory statistical course at university level. Gender and age are self-explanatory. The points-variable tells how many exam points the person had. The attitude variable is a sum of 10 questions related to students attitude towards statistics, in a 1-5 scale. The remaining variables deep, stra and surf are combination variables that have been combined from multiple questions with the same dimension. The variables are averages of the selected questions concerning deep, surface and strategic learning.
+
+
+## Graphical overview of the data and summaries of the variables
+
+
+```{r}
+library(ggplot2)
+
+theme_set(theme_bw())
+
+
+# plot of students' attitude and points
+ggplot(learning2014, aes(x = attitude, y = points, col = gender)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  scale_colour_manual(values = c("violet", "navy")) +
+  labs(title = "Student's attitude compared to exam points",
+       subtitle =  "learning2014 data")
+
+
+```
+
+
+
+
+```{r}
+
+library(GGally)
+library(ggplot2)
+
+# draw a scatter plot matrix of the variables in learning2014.
+# [-1] excludes the first column (gender)
+pairs(learning2014[-1])
+
+# add color by gender
+gender_col <- c("violet", "navy")[unclass(factor(learning2014$gender))]
+
+pairs(learning2014[-1], pch = 21, col = gender_col)
+
+
+# create a more advanced plot matrix with ggpairs()
+ggpairs(learning2014, mapping = aes(), lower = list(combo = wrap("facethist", bins = 20)))
+
+
+# with color by gender
+ggpairs(learning2014, mapping = aes(col = gender, alpha = 0.3), lower = list(combo = wrap("facethist", bins = 20))) +
+  scale_colour_manual(values = c("violet", "navy")) +
+  scale_fill_manual(values = c("violet", "navy"))
+
+
+
+```
+
+
+First when looking at the distribution of the variables, it is clear that age is concentrated below thirty, with a long tail towards right. With the age variable, the skew is larger than with any other variable. There is also more variation between men compared to women.
+Interestingly with the attitude variable, there is more variation with women compared to men, who also have a higher mean.
+The deep variable has a longer tail on the left side, so the observations are more concentrated on the higher side. The difference between genders is very small in this case.
+The stra variable has a large distribution.
+The surf variable is more concentrated among women compared to men.
+The point variable has a thick tale among lower scores and the distribution is more concentrated among higher scores.
+
+
+The largest and most significant correlation can be found with attitude and points. It is positive, so better attitude is related to better points in the exam.
+There is least correlation between deep learning and points from the exam which is interesting as well.
+Surf variable is also signicicantly correlating with attitude and deep, but only with men.
+
+
+
+
