@@ -443,7 +443,7 @@ Hints:
 # [-1] excludes the first column (gender)
 pairs(learning2014[-1])
 
-pairs(learning2014[-1], col = c("cornflowerblue")[learning2014$gender])
+pairs(learning2014[-1], col = c("violet", "navy")[learning2014$gender])
 
 # access the GGally and ggplot2 libraries
 library(GGally)
