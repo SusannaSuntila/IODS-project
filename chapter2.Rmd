@@ -1,10 +1,5 @@
 # Regression and model validation
 
-*Describe the work you have done this week and summarize your learning.*
-
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods.
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using.
 
 ```{r}
 date()
@@ -14,6 +9,7 @@ date()
 
 ```{r}
 library(tidyverse)
+# the data-set that I created
 learning2014 <- read.csv(file.path(".", "data", "learning2014.csv"))
 
 ```
@@ -34,7 +30,7 @@ str(learning2014)
 There are 166 rows and 7 columns in this data. The gender variable is a character, the other variables are numbers or integers.
 
 
-The original data is from a questionnaire that tracked different learning approaches and achievements on an introductory statistical course at university level. Gender and age are self-explanatory. The points-variable tells how many exam points the person had. The attitude variable is a sum of 10 questions related to students attitude towards statistics, in a 1-5 scale. The remaining variables deep, stra and surf are combination variables that have been combined from multiple questions with the same dimension. The variables are averages of the selected questions concerning deep, surface and strategic learning.
+The original data is from a questionnaire that tracked different learning approaches and achievements on an introductory statistical course at university level. Gender and age are self-explanatory. The points variable tells how many exam points the person had. The attitude variable is a sum of 10 questions related to students attitude towards statistics, in a 1-5 scale. The remaining variables deep, stra and surf are combination variables that have been combined from multiple questions with the same dimension. The variables are averages of the selected questions concerning deep, surface and strategic learning.
 
 
 ## Graphical overview of the data and summaries of the variables
@@ -43,14 +39,15 @@ The original data is from a questionnaire that tracked different learning approa
 ```{r}
 library(ggplot2)
 
+# set the theme white
 theme_set(theme_bw())
 
 
-# plot of students' attitude and points
+# plot of student's attitude and points
 ggplot(learning2014, aes(x = attitude, y = points, col = gender)) +
   geom_point() +
   geom_smooth(method = "lm") +
-  scale_colour_manual(values = c("violet", "navy")) +
+  scale_colour_manual(values = c("lightpink2", "maroon")) +
   labs(title = "Student's attitude compared to exam points",
        subtitle =  "learning2014 data")
 
@@ -70,9 +67,9 @@ library(ggplot2)
 pairs(learning2014[-1])
 
 # add color by gender
-gender_col <- c("violet", "navy")[unclass(factor(learning2014$gender))]
+gender_col <- c("lightpink2", "maroon")[unclass(factor(learning2014$gender))]
 
-pairs(learning2014[-1], pch = 21, col = gender_col)
+pairs(learning2014[-1], pch = 19, col = gender_col)
 
 
 # create a more advanced plot matrix with ggpairs()
@@ -81,25 +78,104 @@ ggpairs(learning2014, mapping = aes(), lower = list(combo = wrap("facethist", bi
 
 # with color by gender
 ggpairs(learning2014, mapping = aes(col = gender, alpha = 0.3), lower = list(combo = wrap("facethist", bins = 20))) +
-  scale_colour_manual(values = c("violet", "navy")) +
-  scale_fill_manual(values = c("violet", "navy"))
+  scale_colour_manual(values = c("lightpink2", "maroon")) +
+  scale_fill_manual(values = c("lightpink2", "maroon"))
 
 
 
 ```
 
 
-First when looking at the distribution of the variables, it is clear that age is concentrated below thirty, with a long tail towards right. With the age variable, the skew is larger than with any other variable. There is also more variation between men compared to women.
+First, there are clearly more women who have participated in this questionnaire than men.
+When looking at the distribution of the variables, it is clear that age is concentrated below thirty, with a long tail towards right. With the age variable, the skew is larger than with any other variable. There is also more variation between men compared to women.
 Interestingly with the attitude variable, there is more variation with women compared to men, who also have a higher mean.
 The deep variable has a longer tail on the left side, so the observations are more concentrated on the higher side. The difference between genders is very small in this case.
-The stra variable has a large distribution.
+The stra variable has a wide distribution.
 The surf variable is more concentrated among women compared to men.
 The point variable has a thick tale among lower scores and the distribution is more concentrated among higher scores.
 
 
 The largest and most significant correlation can be found with attitude and points. It is positive, so better attitude is related to better points in the exam.
 There is least correlation between deep learning and points from the exam which is interesting as well.
-Surf variable is also signicicantly correlating with attitude and deep, but only with men.
+Surf variable is also significantly correlating with attitude and deep, but with more significance with men.
+
+
+## Regression model with three explanatory variables
+
+
+```{r}
+
+library(GGally)
+library(ggplot2)
+
+# draw a plot of the linear relation of exam points and attitude
+qplot(attitude, points, data = learning2014) + geom_smooth(method = "lm")
+
+
+# create a regression model with multiple explanatory variables
+model1 <- lm(points ~ attitude + gender + stra, data = learning2014)
+
+# print out a summary of the model
+summary(model1)
+
+
+```
+
+
+
+In this model the dependent variable is exam points as instructed. The three explanatory variables that I chose are attitude, gender and stra. In the summary of the model it can be seen that only the intercept and the variable attitude are statistically significant. The coefficient on attitude, 3.5, tells that one unit change in attitude is related to a 3.5 point increase in exam points. The gender variable is a dummy variable that has the value 1 when the person's gender is male, so the coefficient on the variable gender describes the difference between the two genders, and when the person is male, it lowers the exam points by -0.22. The stra variable that is computed from strategic questions has a coefficient of 0.89, meaning that better strategic learning will increase the exam points.The F-test that all three coefficients would be zero has a very small p-value, so it can be rejected.
+
+As the variables gender and stra were not statistically significant, I tried first to drop the gender variable.
+
+
+
+## Regression model with one variable
+
+
+```{r}
+
+# create a second regression model
+model2 <- lm(points ~ attitude + stra, data = learning2014)
+
+# print out a summary of the model
+summary(model2)
+
+
+```
+
+
+
+The attitude variable is statistically highly significant. The attitude variable is positively related to the exam points, with 3.5 increase with one unit change in attitude for the better. The intercept of this model means that if attitude would be 0, exam points would be 11.6 according to this model. What is interesting, is that when gender variable is removed from the model, the stra variable becomes significant at 10 percent level. It has a coefficient 0.9, meaning that one unit increase in strategic learning is related to a 0.9 increase in exam points.
+
+
+The multiple R-squared is 0.20, which means that this model explains 20 percent of the variation in exam points.
+
+Compared to the last mode, the F-statistic has risen as well, and the p-value is smaller.
+
+
+
+## Diagnostic plots
+
+
+```{r}
+
+# draw diagnostic plots using the plot() function. Choose the plots 1, 2 and 5
+par(mfrow = c(2,2))
+plot(model2,which = c(1,2,5))
+
+
+```
+
+
+
+The first plot that compares the residuals with the fitted values shows that the points are spread around quite randomly, except for a few outliers, so the model is quite appropriate. The plot does not indicate non-linear trends or non-constant variance.
+
+
+The Q-Q-plot shows that the residuals are somewhat normally distributed. However, the lower tail is more heavy, so the values are larger there than would be expected and the upper tail is lighter, so values are smaller there than expected.
+
+The residuals vs leverage plot shows if there are any outliers that would be significant for the model. The Cook's distance curved lines don't show in this plot, so the outliers aren't too disturbing and there aren't points that would have high residuals and too much leverage at the same time.
+
+
 
 
 
