@@ -148,7 +148,7 @@ summary(model2)
 The attitude variable is still statistically highly significant. The attitude variable is positively related to the exam points, with 3.5 increase with one unit change in attitude for the better conditional on the stra variable. The intercept of this model means that if attitude would be 0, exam points would be 11.6 according to this model. What is interesting, is that when gender variable is removed from the model, the stra variable becomes significant at 10 percent level. It has a coefficient 0.9, meaning that one unit increase in strategic learning is related to a 0.9 increase in exam points, conditional on the attitude variable.
 
 
-The multiple R-squared is 0.20, which means that this model explains 20 percent of the variation in exam points.
+The multiple R-squared is 0.20, which means that the two variables attitude and stra together explain 20 percent of the variation in exam points.
 
 Compared to the last model, the F-statistic has risen as well, and the p-value is smaller.
 
