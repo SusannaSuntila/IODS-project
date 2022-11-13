@@ -24,13 +24,12 @@ dim(learning2014)
 # Look at the structure of the data
 str(learning2014)
 
-
 ```
 
-There are 166 rows and 7 columns in this data. The gender variable is a character, the other variables are numbers or integers.
+There are 166 rows (observations) and 7 columns (variables) in this data. The gender variable is a character, the other variables are numbers or integers.
 
 
-The original data is from a questionnaire that tracked different learning approaches and achievements on an introductory statistical course at university level. Gender and age are self-explanatory. The points variable tells how many exam points the person had. The attitude variable is a sum of 10 questions related to students attitude towards statistics, in a 1-5 scale. The remaining variables deep, stra and surf are combination variables that have been combined from multiple questions with the same dimension. The variables are averages of the selected questions concerning deep, surface and strategic learning.
+The original data is from a questionnaire that tracked different learning approaches and achievements on an introductory statistical course at university level. Gender and age are self-explanatory. The points variable tells how many exam points the person had. The attitude variable is a sum of 10 questions related to student's attitude towards statistics, in a 1-5 scale. The remaining variables deep, stra and surf are combination variables that have been combined from multiple questions with the same dimension. The variables are averages of the selected questions concerning deep, surface and strategic learning.
 
 
 ## Graphical overview of the data and summaries of the variables
@@ -88,7 +87,7 @@ ggpairs(learning2014, mapping = aes(col = gender, alpha = 0.3), lower = list(com
 
 First, there are clearly more women who have participated in this questionnaire than men.
 When looking at the distribution of the variables, it is clear that age is concentrated below thirty, with a long tail towards right. With the age variable, the skew is larger than with any other variable. There is also more variation between men compared to women.
-Interestingly with the attitude variable, there is more variation with women compared to men, who also have a higher mean.
+Interestingly with the attitude variable, there is more variation with women compared to men. Men also have slightly higher mean, and their distribution is more skewed.
 The deep variable has a longer tail on the left side, so the observations are more concentrated on the higher side. The difference between genders is very small in this case.
 The stra variable has a wide distribution.
 The surf variable is more concentrated among women compared to men.
@@ -96,8 +95,8 @@ The point variable has a thick tale among lower scores and the distribution is m
 
 
 The largest and most significant correlation can be found with attitude and points. It is positive, so better attitude is related to better points in the exam.
-There is least correlation between deep learning and points from the exam which is interesting as well.
-Surf variable is also significantly correlating with attitude and deep, but with more significance with men.
+The lowest correlation is between deep learning and points from the exam which is interesting as well.
+Surf variable is also significantly correlating with attitude and deep.
 
 
 ## Regression model with three explanatory variables
@@ -123,9 +122,10 @@ summary(model1)
 
 
 
-In this model the dependent variable is exam points as instructed. The three explanatory variables that I chose are attitude, gender and stra. In the summary of the model it can be seen that only the intercept and the variable attitude are statistically significant. The coefficient on attitude, 3.5, tells that one unit change in attitude is related to a 3.5 point increase in exam points. The gender variable is a dummy variable that has the value 1 when the person's gender is male, so the coefficient on the variable gender describes the difference between the two genders, and when the person is male, it lowers the exam points by -0.22. The stra variable that is computed from strategic questions has a coefficient of 0.89, meaning that better strategic learning will increase the exam points.The F-test that all three coefficients would be zero has a very small p-value, so it can be rejected.
+In this model the dependent variable is exam points as instructed. The three explanatory variables that I chose are attitude, gender and stra. In the summary of the model it can be seen that only the intercept and the variable attitude are statistically significant, so attitude is the only variable strongly associated with exam points in this particular model. The coefficient on attitude, 3.5, tells that one unit change in attitude is related to a 3.5 point increase in exam points, conditional on other variables of this model. The gender variable is a dummy variable that has the value 1 when the person's gender is male, so the coefficient of the gender variable describes the difference between the two genders, and when the person is male, it lowers the exam points by -0.22, again conditional on the other variables of this model. The stra variable that is computed from strategic questions has a coefficient of 0.89, meaning that better strategic learning will increase the exam points. The F-test that all three coefficients would be zero has a very small p-value, so it can be rejected.
 
-As the variables gender and stra were not statistically significant, I tried first to drop the gender variable.
+
+As the variables gender and stra were not statistically significant, I dropped the gender variable first in the next model.
 
 
 
@@ -145,12 +145,12 @@ summary(model2)
 
 
 
-The attitude variable is statistically highly significant. The attitude variable is positively related to the exam points, with 3.5 increase with one unit change in attitude for the better. The intercept of this model means that if attitude would be 0, exam points would be 11.6 according to this model. What is interesting, is that when gender variable is removed from the model, the stra variable becomes significant at 10 percent level. It has a coefficient 0.9, meaning that one unit increase in strategic learning is related to a 0.9 increase in exam points.
+The attitude variable is still statistically highly significant. The attitude variable is positively related to the exam points, with 3.5 increase with one unit change in attitude for the better conditional on the stra variable. The intercept of this model means that if attitude would be 0, exam points would be 11.6 according to this model. What is interesting, is that when gender variable is removed from the model, the stra variable becomes significant at 10 percent level. It has a coefficient 0.9, meaning that one unit increase in strategic learning is related to a 0.9 increase in exam points, conditional on the attitude variable.
 
 
 The multiple R-squared is 0.20, which means that this model explains 20 percent of the variation in exam points.
 
-Compared to the last mode, the F-statistic has risen as well, and the p-value is smaller.
+Compared to the last model, the F-statistic has risen as well, and the p-value is smaller.
 
 
 
@@ -168,12 +168,12 @@ plot(model2,which = c(1,2,5))
 
 
 
-The first plot that compares the residuals with the fitted values shows that the points are spread around quite randomly, except for a few outliers, so the model is quite appropriate. The plot does not indicate non-linear trends or non-constant variance.
+The first plot that compares the residuals with the fitted values shows that the points are spread around quite randomly, except for a few outliers, so the model is pretty appropriate. The plot does not indicate non-linear trends or non-constant variance.
 
 
 The Q-Q-plot shows that the residuals are somewhat normally distributed. However, the lower tail is more heavy, so the values are larger there than would be expected and the upper tail is lighter, so values are smaller there than expected.
 
-The residuals vs leverage plot shows if there are any outliers that would be significant for the model. The Cook's distance curved lines don't show in this plot, so the outliers aren't too disturbing and there aren't points that would have high residuals and too much leverage at the same time.
+The residuals vs leverage plot shows if there are any outliers that would be significant for the model. The Cook's distance curved lines don't show in this plot, so the outliers aren't too disturbing and there aren't any points that would have high residuals and too much leverage at the same time.
 
 
 
