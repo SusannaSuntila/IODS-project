@@ -1,0 +1,18 @@
+
+# Logistic regression
+
+
+```{r}
+date()
+```
+
+
+## Read the data
+
+```{r}
+
+
+```
+
+
+
