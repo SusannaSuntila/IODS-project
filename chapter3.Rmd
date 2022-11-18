@@ -11,6 +11,7 @@ date()
 
 ```{r}
 library(tidyverse)
+# read in the data that was created
 alc <- read.csv(file.path(".", "data", "alc.csv"))
 
 # print names of the variables
@@ -24,39 +25,64 @@ This data set is constructed from a secondary school student questionnaire of Po
 
 ## relationships between high/low alcohol consumption
 
-The binary variable **address** is an interesting one, I would predict that living in urban areas high alcohol use would be more probable, as there are more options.
+
+The binary variable **address** is an interesting one, I would predict that living in urban areas high alcohol use would be more probable, as there are more options than for students living in rural areas.
 
 
-Another binary variable that I want to look at is the **famsize** one, to see if having a family size less or equal to three being linked to high use of alcohol as opposed to having family size larger than 3, which might mean that the student has more family around them.
+Another variable that I want to look at is the **studytime** one (weekly study time, divided into 4 groups, where 4 is the highest amount spent in studying), to see if spending more time studying is negatively related to high alcohol use.
 
 
-I would hypothesize also that **goout** variable, of how much the student goes out with friends (1-5 scale where 5 is very high) is positively linked to high alcohol use.
+I would hypothesize also that **goout** variable, telling how much the student goes out with friends (1-5 scale where 5 is very high) is positively linked to high alcohol use.
 
 
-Lastly I wanted to include the continuous variable **G3**, which measures the final grade. I would hypothesize that higher grade is negatively linked to high alcohol use.
+Lastly I wanted to include the continuous variable **absences**, which measures the number of school absences (0-93). I would hypothesize that more absences are positively linked to high alcohol use.
 
 
 
 ## explore variables' distributions and relationships with alcohol consumption
 
 
+First the address variable
+
 
 ```{r}
-# address variable
-ggplot(data = alc, aes(x = high_use)) + 
-  geom_bar() + 
-  facet_wrap("address")
+
+g1 <-  ggplot(data = alc, aes(x = address, fill = high_use)) + 
+  geom_bar() +
+  theme(legend.position = "none") +
+  scale_fill_manual(values = c("paleturquoise2", "paleturquoise4"))
+
+g2 <- ggplot(data = alc, aes(x = address, fill = high_use)) + 
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  scale_fill_manual(values = c("paleturquoise2", "paleturquoise4"))
+
+# combine the two plots
+library(patchwork)
+g1 | g2
 
 
 ```
 
 
+
+
 ```{r}
 
 # family size variable
-ggplot(data = alc, aes(x = high_use)) + 
-  geom_bar() + 
-  facet_wrap("famsize")
+g3 <-  ggplot(data = alc, aes(x = studytime, fill = high_use)) + 
+  geom_bar() +
+  theme(legend.position = "none") +
+  scale_fill_manual(values = c("plum2", "plum4"))
+
+g4 <- ggplot(data = alc, aes(x = studytime, fill = high_use)) + 
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  scale_fill_manual(values = c("plum2", "plum4"))
+
+# combine the two plots
+library(patchwork)
+g3 | g4
 
 
 ```
@@ -64,22 +90,41 @@ ggplot(data = alc, aes(x = high_use)) +
 
 ```{r}
 # the going out variable
-ggplot(data = alc, aes(x = goout, fill = high_use)) + 
-  geom_bar()
+
+g5 <-  ggplot(data = alc, aes(x = goout, fill = high_use)) + 
+  geom_bar() +
+  theme(legend.position = "none") +
+  scale_fill_manual(values = c("palevioletred2", "palevioletred4"))
+
+g6 <- ggplot(data = alc, aes(x = goout, fill = high_use)) + 
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  scale_fill_manual(values = c("palevioletred2", "palevioletred4"))
+
+# combine the two plots
+library(patchwork)
+g5 | g6
+
+```
+
+
+```{r}
+# absences
+ggplot(data = alc, aes(x = absences, fill = high_use)) + 
+  geom_bar() +
+  scale_fill_manual(values = c("pink2", "pink4"))
 
 
 ```
 
 
 
+
+
 ```{r}
 
 # 
-ggplot(data = alc, aes(x = studytime, fill = high_use)) + 
-  geom_bar()
-
-
-ggplot(data = alc, aes(x = high_use, y = goout, col = address)) + 
+ggplot(data = alc, aes(x = high_use, y = absences, col = address)) + 
   geom_boxplot()
 
 
@@ -101,7 +146,7 @@ alc %>% group_by(address, high_use) %>% summarise(count = n(), mean_goout = mean
 ```{r}
 
 # find the model with glm()
-model1 <- glm(high_use ~ studytime + goout + address + sex, data = alc, family = "binomial")
+model1 <- glm(high_use ~ absences + studytime + goout + address, data = alc, family = "binomial")
 
 # print out a summary of the model
 summary(model1)
@@ -129,13 +174,11 @@ cbind(OR, CI)
 
 ```{r}
 # fit the model
-model2 <- glm(high_use ~ goout + address + studytime + sex, data = alc, family = "binomial")
-
-summary(model2)
+model1 <- glm(high_use ~ absences + studytime + goout + address, data = alc, family = "binomial")
 
 
 library(dplyr)
-alc <- mutate(alc, probability = predict(model2, type = "response"))
+alc <- mutate(alc, probability = predict(model1, type = "response"))
 alc <- mutate(alc, prediction = probability > 0.5)
 
 
@@ -187,7 +230,7 @@ table(high_use = alc$high_use, prediction = alc$prediction) %>%
 
 #K-fold cross-validation
 library(boot)
-cv <- cv.glm(data = alc, cost = loss_func, glmfit = model2, K = 10)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = model1, K = 10)
 
 # average number of wrong predictions in the cross validation
 cv$delta[1]
