@@ -10,9 +10,197 @@ date()
 ## Read the data
 
 ```{r}
+library(tidyverse)
+alc <- read.csv(file.path(".", "data", "alc.csv"))
+
+# print names of the variables
+colnames(alc)
+```
+
+
+
+This data set is constructed from a secondary school student questionnaire of Portuguese schools. As the names of the variables indicate, the questions cover topics such as school and studies, but have also social and demographic aspects. The alc data set is combined from two data sets dealing with the students' performance in math and Portuguese language.
+
+
+## relationships between high/low alcohol consumption
+
+The binary variable **address** is an interesting one, I would predict that living in urban areas high alcohol use would be more probable, as there are more options.
+
+
+Another binary variable that I want to look at is the **famsize** one, to see if having a family size less or equal to three being linked to high use of alcohol as opposed to having family size larger than 3, which might mean that the student has more family around them.
+
+
+I would hypothesize also that **goout** variable, of how much the student goes out with friends (1-5 scale where 5 is very high) is positively linked to high alcohol use.
+
+
+Lastly I wanted to include the continuous variable **G3**, which measures the final grade. I would hypothesize that higher grade is negatively linked to high alcohol use.
+
+
+
+## explore variables' distributions and relationships with alcohol consumption
+
+
+
+```{r}
+# address variable
+ggplot(data = alc, aes(x = high_use)) + 
+  geom_bar() + 
+  facet_wrap("address")
 
 
 ```
+
+
+```{r}
+
+# family size variable
+ggplot(data = alc, aes(x = high_use)) + 
+  geom_bar() + 
+  facet_wrap("famsize")
+
+
+```
+
+
+```{r}
+# the going out variable
+ggplot(data = alc, aes(x = goout, fill = high_use)) + 
+  geom_bar()
+
+
+```
+
+
+
+```{r}
+
+# 
+ggplot(data = alc, aes(x = studytime, fill = high_use)) + 
+  geom_bar()
+
+
+ggplot(data = alc, aes(x = high_use, y = goout, col = address)) + 
+  geom_boxplot()
+
+
+```
+
+
+```{r}
+
+# table of address, high use of alcohol and the mean of going out
+alc %>% group_by(address, high_use) %>% summarise(count = n(), mean_goout = mean(goout))
+
+
+```
+
+
+## logistic regression of the chosen variables
+
+
+```{r}
+
+# find the model with glm()
+model1 <- glm(high_use ~ studytime + goout + address + sex, data = alc, family = "binomial")
+
+# print out a summary of the model
+summary(model1)
+
+# print out the coefficients of the model
+coef(model1)
+
+# compute odds ratios (OR)
+OR <- coef(model1) %>% exp
+
+# compute confidence intervals (CI)
+CI <- confint(model1) %>% exp()
+
+# print out the odds ratios with their confidence intervals
+cbind(OR, CI)
+
+
+```
+
+
+
+
+## explore the predictive power of you model
+
+
+```{r}
+# fit the model
+model2 <- glm(high_use ~ goout + address + studytime + sex, data = alc, family = "binomial")
+
+summary(model2)
+
+
+library(dplyr)
+alc <- mutate(alc, probability = predict(model2, type = "response"))
+alc <- mutate(alc, prediction = probability > 0.5)
+
+
+# tabulate the target variable versus the predictions
+table(high_use = alc$high_use, prediction = alc$prediction)
+
+
+
+```
+
+
+
+Provide a 2x2 cross tabulation of predictions versus the actual values and optionally display a graphic visualizing both the actual values and the predictions. Compute the total proportion of inaccurately classified individuals (= the training error) and comment on all the results. Compare the performance of the model with performance achieved by some simple guessing strategy.
+
+
+```{r}
+# define a loss function (mean prediction error)
+
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+# call loss_func to compute the average number of wrong predictions in the (training) data
+loss_func(class = alc$high_use, prob = alc$probability)
+
+
+```
+
+
+```{r}
+
+# initialize a plot of 'high_use' versus 'probability' in 'alc'
+g <- ggplot(alc, aes(x = probability, y = high_use, col = prediction))
+
+# define the geom as points and draw the plot
+g + geom_point()
+
+# tabulate the target variable versus the predictions
+table(high_use = alc$high_use, prediction = alc$prediction) %>% 
+  prop.table() %>% 
+  addmargins()
+
+```
+
+
+
+```{r}
+
+#K-fold cross-validation
+library(boot)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = model2, K = 10)
+
+# average number of wrong predictions in the cross validation
+cv$delta[1]
+
+
+
+```
+
+
+
+
+
+
 
 
 
