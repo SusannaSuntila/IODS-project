@@ -44,18 +44,23 @@ Lastly I wanted to include the continuous variable **absences**, which measures 
 
 First the address variable
 
-
 ```{r}
 
+library(ggplot2)
+
+# set the background white
+theme_set(theme_bw())
+
+# bar plots of address variable
 g1 <-  ggplot(data = alc, aes(x = address, fill = high_use)) + 
   geom_bar() +
   theme(legend.position = "none") +
-  scale_fill_manual(values = c("paleturquoise2", "paleturquoise4"))
+  scale_fill_manual(values = c("paleturquoise3", "paleturquoise4"))
 
 g2 <- ggplot(data = alc, aes(x = address, fill = high_use)) + 
   geom_bar(position = "fill") +
   ylab("proportion") +
-  scale_fill_manual(values = c("paleturquoise2", "paleturquoise4"))
+  scale_fill_manual(values = c("paleturquoise3", "paleturquoise4"))
 
 # combine the two plots
 library(patchwork)
@@ -65,20 +70,23 @@ g1 | g2
 ```
 
 
+As expected, most of the students live in urban areas, and so more people have high use of alcohol levels in urban areas, but relatively more people have high use of alcohol in rural areas.
 
+
+Next the studytime variable:
 
 ```{r}
 
-# family size variable
+# studytime variable
 g3 <-  ggplot(data = alc, aes(x = studytime, fill = high_use)) + 
   geom_bar() +
   theme(legend.position = "none") +
-  scale_fill_manual(values = c("plum2", "plum4"))
+  scale_fill_manual(values = c("plum3", "plum4"))
 
 g4 <- ggplot(data = alc, aes(x = studytime, fill = high_use)) + 
   geom_bar(position = "fill") +
   ylab("proportion") +
-  scale_fill_manual(values = c("plum2", "plum4"))
+  scale_fill_manual(values = c("plum3", "plum4"))
 
 # combine the two plots
 library(patchwork)
@@ -88,18 +96,24 @@ g3 | g4
 ```
 
 
+As expected, less studytime has higher proportion of students who have high use of alcohol.
+
+
+Next the going out variable:
+
+
 ```{r}
 # the going out variable
 
 g5 <-  ggplot(data = alc, aes(x = goout, fill = high_use)) + 
   geom_bar() +
   theme(legend.position = "none") +
-  scale_fill_manual(values = c("palevioletred2", "palevioletred4"))
+  scale_fill_manual(values = c("palevioletred3", "palevioletred4"))
 
 g6 <- ggplot(data = alc, aes(x = goout, fill = high_use)) + 
   geom_bar(position = "fill") +
   ylab("proportion") +
-  scale_fill_manual(values = c("palevioletred2", "palevioletred4"))
+  scale_fill_manual(values = c("palevioletred3", "palevioletred4"))
 
 # combine the two plots
 library(patchwork)
@@ -108,27 +122,50 @@ g5 | g6
 ```
 
 
+Here the high use of alcohol increases with the amount of going out with friends.
+
+
+And lastly the adbsences variable:
+
 ```{r}
 # absences
-ggplot(data = alc, aes(x = absences, fill = high_use)) + 
+g7 <- ggplot(data = alc, aes(x = absences, fill = high_use)) + 
   geom_bar() +
-  scale_fill_manual(values = c("pink2", "pink4"))
+  theme(legend.position = "none") +
+  scale_fill_manual(values = c("pink3", "pink4"))
+
+g8 <- ggplot(data = alc, aes(x = absences, fill = high_use)) + 
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("pink3", "pink4")) +
+  ylab("proportion")
+
+# combine the two plots
+library(patchwork)
+g7 | g8
 
 
 ```
 
 
+Here it is clear that increase in absences is linked to an increase proportionally high use of alcohol as well.
 
 
 
 ```{r}
 
-# 
+# box plot of absences with color by address
 ggplot(data = alc, aes(x = high_use, y = absences, col = address)) + 
-  geom_boxplot()
+  geom_boxplot() +
+  scale_color_manual(values = c("violetred", "violetred4"))
 
 
 ```
+
+
+The median of absences is the same whether student is form rural or urban area when there is no high use of alcohol, but the median for absences is higher for students from rural areas if they belong to the high use of alcohol group.
+
+
+Next few cross-tabulations. First I wanted to include a table that includes address, the mean of going out and of course high use of alcohol.
 
 
 ```{r}
@@ -140,16 +177,43 @@ alc %>% group_by(address, high_use) %>% summarise(count = n(), mean_goout = mean
 ```
 
 
+The mean of going out increases quite a lot when the alcohol use is high for both rural and urban area students. The mean of going out in both cases of high use of alcohol (true or false) is higher for students who live in urban areas compared to rural area students, as would be expected.
+
+
+
+```{r}
+
+# table of address, high use of alcohol and the mean of going out
+alc %>% group_by(high_use) %>% summarise(count = n(), mean_studytime = mean(studytime), mean_absences = mean(absences))
+
+
+```
+
+
+Those students who have high use of alcohol also have lower mean of studytime and higher mean of absences compared to those who do not have high use of alcohol.
+
+
+
+
 ## logistic regression of the chosen variables
 
 
 ```{r}
 
-# find the model with glm()
+# simple model
+model <- glm(high_use ~ absences, data = alc, family = "binomial")
+
+#summary of the simple model
+summary(model)
+
+####
+
+# model with all the variables: absences, studytime, goout and address
 model1 <- glm(high_use ~ absences + studytime + goout + address, data = alc, family = "binomial")
 
 # print out a summary of the model
 summary(model1)
+
 
 # print out the coefficients of the model
 coef(model1)
@@ -167,16 +231,36 @@ cbind(OR, CI)
 ```
 
 
+When first looking at the summary of the fitted model, all the coefficients are statistically significant at the 5 % level. As the exploration of the variables earlier imlplied, the relationship is positive with absences and goout, so increase in these variables will increase the odds of the student having high use of alcohol. Studytime and address on the other hand decrease the odds of having high use of alcohol.
+
+
+I looked at first a simple model, where absences was the only explanatory variable, and the AIC was 438.52. After adding the three other variables, the AIC had decreased to 381.44, so adding the other variables has improved the variable.
+
+
+Looking at the coefficients more closer, absences has an odds ratio of 1.069, meaning that a unit increase in absences increase the odds of the student having high use of alcohol by 6.9% keeping other variables constant, and the confidence interval is between 2.5% and 11.97%. This isn't so large effect, as could be expected based on the graphs in the start.
+
+
+Studytime has a coefficient that is less than one, 0.55, so when studytime increases by one more unit, it decreases the odds of the student having high use of alcohol by 45% when other variables are constant, and the 95% CI is 61% - 24% decrease in odds. Studytime has an opposite effect when increasing, compared to absences.
+
+
+The goout variable has an odds ratio of 2.125, meaning that a unit increase in goout increases the odds of the student having high use of alcohol by 112.5% again adjusting for the other variables in the model. The 95% CI is 68.8% - 171%. So going out has quite a large effect, which was apparent when plotting it in the beginning.
+
+
+The address variable has an odds ratio of 0.48, meaning that if the student lives in an urban area, it decreases the odds of the student having high use of alcohol by 52%, when adjusting for the other variables. The negative effect has a 95% CI between 74% - 13%. This is quite surprising as in the beginning I wasn't even sure of the direction of the effect.
+
 
 
 ## explore the predictive power of you model
+
+
+First a 2x2 cross tabulation of predictions versus the actual values:
 
 
 ```{r}
 # fit the model
 model1 <- glm(high_use ~ absences + studytime + goout + address, data = alc, family = "binomial")
 
-
+# predictions
 library(dplyr)
 alc <- mutate(alc, probability = predict(model1, type = "response"))
 alc <- mutate(alc, prediction = probability > 0.5)
@@ -185,13 +269,18 @@ alc <- mutate(alc, prediction = probability > 0.5)
 # tabulate the target variable versus the predictions
 table(high_use = alc$high_use, prediction = alc$prediction)
 
+# initialize a plot of 'high_use' versus 'probability' in 'alc'
+ggplot(alc, aes(x = probability, y = high_use, col = prediction)) +
+  geom_point()
 
 
 ```
 
 
+This model predicts high use incorrectly for 22 students, and low use incorrectly for 63 students.
 
-Provide a 2x2 cross tabulation of predictions versus the actual values and optionally display a graphic visualizing both the actual values and the predictions. Compute the total proportion of inaccurately classified individuals (= the training error) and comment on all the results. Compare the performance of the model with performance achieved by some simple guessing strategy.
+
+Next the the total proportion of inaccurately classified individuals, the training error.
 
 
 ```{r}
@@ -208,27 +297,15 @@ loss_func(class = alc$high_use, prob = alc$probability)
 
 ```
 
+The training error is 0.2297, so on average 23% of the predictions are wrong.
 
-```{r}
 
-# initialize a plot of 'high_use' versus 'probability' in 'alc'
-g <- ggplot(alc, aes(x = probability, y = high_use, col = prediction))
-
-# define the geom as points and draw the plot
-g + geom_point()
-
-# tabulate the target variable versus the predictions
-table(high_use = alc$high_use, prediction = alc$prediction) %>% 
-  prop.table() %>% 
-  addmargins()
-
-```
-
+## perform 10-fold cross-validation on your model
 
 
 ```{r}
 
-#K-fold cross-validation
+#K-fold cross-validation, K=10
 library(boot)
 cv <- cv.glm(data = alc, cost = loss_func, glmfit = model1, K = 10)
 
@@ -239,7 +316,7 @@ cv$delta[1]
 
 ```
 
-
+The 10-fold cross-validation gives the prediction error of 0.2486, so 24.86% of the predictions are wrong. This is slightly smaller than the model in the exercise set had, 0.26, so the model that I have used has a bit better test set performance.
 
 
 
