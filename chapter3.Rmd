@@ -23,26 +23,27 @@ colnames(alc)
 This data set is constructed from a secondary school student questionnaire of Portuguese schools. As the names of the variables indicate, the questions cover topics such as school and studies, but have also social and demographic aspects. The alc data set is combined from two data sets dealing with the students' performance in math and Portuguese language.
 
 
-## relationships between high/low alcohol consumption
+## Relationships between high/low alcohol consumption
 
 
-The binary variable **address** is an interesting one, I would predict that living in urban areas high alcohol use would be more probable, as there are more options than for students living in rural areas.
+The binary variable **address** is an interesting one, I would predict that when living in urban areas high alcohol use would be more probable, as there are more options to use alcohol than for students living in rural areas.
 
 
-Another variable that I want to look at is the **studytime** one (weekly study time, divided into 4 groups, where 4 is the highest amount spent in studying), to see if spending more time studying is negatively related to high alcohol use.
+Another variable that I want to look at is the **studytime** one (weekly study time, divided into 4 groups, where 4 is the highest amount spent in studying), to see if spending more time studying is negatively related to high alcohol use, as the student is spending more time with studies and is possibly more committed to school.
 
 
-I would hypothesize also that **goout** variable, telling how much the student goes out with friends (1-5 scale where 5 is very high) is positively linked to high alcohol use.
+I would hypothesize also that **goout** variable, telling how much the student goes out with friends (1-5 scale where 5 is very high) is positively linked to high alcohol use, as alcohol is usually a socially related issue.
 
 
-Lastly I wanted to include the continuous variable **absences**, which measures the number of school absences (0-93). I would hypothesize that more absences are positively linked to high alcohol use.
+Lastly I wanted to include the more continuous variable **absences**, which measures the number of school absences (0-93). I would hypothesize that more absences are positively linked to high alcohol use, as drinking a lot might affect the student's attendance at school.
 
 
 
-## explore variables' distributions and relationships with alcohol consumption
+## Explore variables' distributions and relationships with alcohol consumption
 
 
-First the address variable
+First the **address** variable
+
 
 ```{r}
 
@@ -70,10 +71,11 @@ g1 | g2
 ```
 
 
-As expected, most of the students live in urban areas, and so more people have high use of alcohol levels in urban areas, but relatively more people have high use of alcohol in rural areas.
+As can be expected, most of the students live in urban areas, and so more people have high use of alcohol levels in urban areas, but contrary to what I thought relatively more people have high use of alcohol in rural areas.
 
 
-Next the studytime variable:
+Next the **studytime** variable:
+
 
 ```{r}
 
@@ -96,10 +98,10 @@ g3 | g4
 ```
 
 
-As expected, less studytime has higher proportion of students who have high use of alcohol.
+As I thought, less studytime has higher proportion of students who have high use of alcohol. This is clear for both absolutely and proportionally.
 
 
-Next the going out variable:
+Next the **goout** variable:
 
 
 ```{r}
@@ -122,10 +124,10 @@ g5 | g6
 ```
 
 
-Here the high use of alcohol increases with the amount of going out with friends.
+Here the high use of alcohol increases with the amount of going out with friends, and the pattern is very clear.
 
 
-And lastly the adbsences variable:
+And lastly the **absences** variable:
 
 ```{r}
 # absences
@@ -147,8 +149,10 @@ g7 | g8
 ```
 
 
-Here it is clear that increase in absences is linked to an increase proportionally high use of alcohol as well.
+Here it is also clear that increase in absences is linked to an increase in high use of alcohol as well, but there are also some outliers with few students who have a very high amount of absences.
 
+
+Looking at the absences variable closer with a box plot:
 
 
 ```{r}
@@ -162,10 +166,10 @@ ggplot(data = alc, aes(x = high_use, y = absences, col = address)) +
 ```
 
 
-The median of absences is the same whether student is form rural or urban area when there is no high use of alcohol, but the median for absences is higher for students from rural areas if they belong to the high use of alcohol group.
+The median of absences is the same whether student is form rural or urban area when there is no high use of alcohol, but the median for absences is slightly higher for students from rural areas if they belong to the high use of alcohol group.
 
 
-Next few cross-tabulations. First I wanted to include a table that includes address, the mean of going out and of course high use of alcohol.
+Next few cross-tabulations. First I wanted to add a table that includes address, the mean of going out and of course high use of alcohol.
 
 
 ```{r}
@@ -177,8 +181,10 @@ alc %>% group_by(address, high_use) %>% summarise(count = n(), mean_goout = mean
 ```
 
 
-The mean of going out increases quite a lot when the alcohol use is high for both rural and urban area students. The mean of going out in both cases of high use of alcohol (true or false) is higher for students who live in urban areas compared to rural area students, as would be expected.
+The mean of going out increases quite a lot when the alcohol use is high for both rural and urban area students. The mean of going out in both cases of alcohol use is higher for students who live in urban areas compared to rural area students, as would be expected.
 
+
+Another cross-tabulation of the mean of studytime and mean of absences with regards to alcohol use:
 
 
 ```{r}
@@ -195,12 +201,12 @@ Those students who have high use of alcohol also have lower mean of studytime an
 
 
 
-## logistic regression of the chosen variables
+## Logistic regression of the chosen variables
 
 
 ```{r}
 
-# simple model
+# simple model with only the absences as an explanatory variable
 model <- glm(high_use ~ absences, data = alc, family = "binomial")
 
 #summary of the simple model
@@ -208,12 +214,11 @@ summary(model)
 
 ####
 
-# model with all the variables: absences, studytime, goout and address
+# model with all the chosen variables: absences, studytime, goout and address
 model1 <- glm(high_use ~ absences + studytime + goout + address, data = alc, family = "binomial")
 
 # print out a summary of the model
 summary(model1)
-
 
 # print out the coefficients of the model
 coef(model1)
@@ -231,13 +236,13 @@ cbind(OR, CI)
 ```
 
 
-When first looking at the summary of the fitted model, all the coefficients are statistically significant at the 5 % level. As the exploration of the variables earlier imlplied, the relationship is positive with absences and goout, so increase in these variables will increase the odds of the student having high use of alcohol. Studytime and address on the other hand decrease the odds of having high use of alcohol.
+I looked at first a simple model, where absences was the only explanatory variable, and the AIC was 438.52. After adding the three other variables, the AIC had decreased to 381.44, so adding the other variables has improved the model.
 
 
-I looked at first a simple model, where absences was the only explanatory variable, and the AIC was 438.52. After adding the three other variables, the AIC had decreased to 381.44, so adding the other variables has improved the variable.
+When looking at the summary of the fitted model with all the chosen variables, all the coefficients are statistically significant at the 5 % level. As the exploration of the variables earlier implied, the relationship is positive with absences and goout, so increase in these variables will increase the odds of the student having high use of alcohol. Studytime and address on the other hand decrease the odds of having high use of alcohol.
 
 
-Looking at the coefficients more closer, absences has an odds ratio of 1.069, meaning that a unit increase in absences increase the odds of the student having high use of alcohol by 6.9% keeping other variables constant, and the confidence interval is between 2.5% and 11.97%. This isn't so large effect, as could be expected based on the graphs in the start.
+Looking at the coefficients more closer, absences has an odds ratio of 1.069, meaning that a unit increase in absences increase the odds of the student having high use of alcohol by 6.9% keeping other variables constant, and the confidence interval is between 2.5% and 11.97%. This isn't as large an effect, as I might have expected.
 
 
 Studytime has a coefficient that is less than one, 0.55, so when studytime increases by one more unit, it decreases the odds of the student having high use of alcohol by 45% when other variables are constant, and the 95% CI is 61% - 24% decrease in odds. Studytime has an opposite effect when increasing, compared to absences.
@@ -250,7 +255,7 @@ The address variable has an odds ratio of 0.48, meaning that if the student live
 
 
 
-## explore the predictive power of you model
+## Explore the predictive power of you model
 
 
 First a 2x2 cross tabulation of predictions versus the actual values:
@@ -271,8 +276,8 @@ table(high_use = alc$high_use, prediction = alc$prediction)
 
 # initialize a plot of 'high_use' versus 'probability' in 'alc'
 ggplot(alc, aes(x = probability, y = high_use, col = prediction)) +
-  geom_point()
-
+  geom_point() +
+  scale_color_manual(values = c("skyblue2", "skyblue4"))
 
 ```
 
@@ -297,10 +302,10 @@ loss_func(class = alc$high_use, prob = alc$probability)
 
 ```
 
-The training error is 0.2297, so on average 23% of the predictions are wrong.
+The training error is 0.2297, so on average ~23% of the predictions are wrong. The training error is below 0.5, so it is better than randomly guessing.
 
 
-## perform 10-fold cross-validation on your model
+## Perform 10-fold cross-validation on your model
 
 
 ```{r}
@@ -313,10 +318,9 @@ cv <- cv.glm(data = alc, cost = loss_func, glmfit = model1, K = 10)
 cv$delta[1]
 
 
-
 ```
 
-The 10-fold cross-validation gives the prediction error of 0.2486, so 24.86% of the predictions are wrong. This is slightly smaller than the model in the exercise set had, 0.26, so the model that I have used has a bit better test set performance.
+One set of the 10-fold cross-validation gives the prediction error of 0.2378, so 23.78% of the predictions are wrong. This is slightly smaller than the model in the exercise set had, 0.26, so the model that I have used has a bit better test set performance.
 
 
 
