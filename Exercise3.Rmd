@@ -509,7 +509,6 @@ summary(m)
 # print out the coefficients of the model
 coef(m)
 
-
 ```
 
 
@@ -769,11 +768,11 @@ loss_func <- function(class, prob) {
 }
 
 # compute the average number of wrong predictions in the (training) data
-loss_func(class = alc$high_use, prob = 0)
+loss_func(class = alc$high_use, prob = alc$probability)
 
 # K-fold cross-validation
 library(boot)
-cv <- cv.glm(data = alc, cost = loss_func, glmfit = m, K = nrow(alc))
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m, K = 10)
 
 # average number of wrong predictions in the cross validation
 cv$delta[1]
