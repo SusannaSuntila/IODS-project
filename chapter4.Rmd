@@ -1,0 +1,262 @@
+
+# Clustering and classification
+
+
+## Load the data
+
+
+```{r}
+# access the MASS package
+library(MASS)
+
+# load the data
+data("Boston")
+
+# explore the dataset
+dim(Boston)
+
+str(Boston)
+
+
+```
+
+
+There are 506 observations and 14 variables in this data set. The data is formed from housing values in suburbs of Boston. For example the variable **crim** tells the per capita crime rate by town. 
+
+
+## Graphical overview of the data
+
+
+
+```{r}
+library(GGally)
+library(ggplot2)
+library(reshape2)
+library(tidyr)
+library(corrplot)
+
+#summary of the variables
+summary(Boston)
+
+# draw a scatter plot matrix of the variables
+pairs(Boston)
+
+# the distribution of all the variables
+ggplot(data = melt(Boston), aes(x = value)) + 
+stat_density() + 
+facet_wrap(~variable, scales = "free")
+
+# correlations between the variables
+cor_matrix <- cor(Boston) %>% 
+  round(., digits = 2)
+
+corrplot(cor_matrix, method="circle", type = "upper", cl.pos = "b", tl.pos = "d", tl.cex = 0.6)
+
+
+```
+
+
+
+
+
+## Standardizing, creating a categorical variable and a train and test set
+
+
+First standardize the data set
+
+
+```{r}
+# use the scale function
+boston_scaled <- as.data.frame(scale(Boston))
+boston_scaled$crim <- as.numeric(boston_scaled$crim)
+
+# summaries of the scaled data
+summary(boston_scaled)
+
+```
+
+
+The initial data had very wide range of values, so standardizing has normalized the range of the values.
+
+
+Next the creation of a factor variable form the **crim** variable:
+
+
+```{r}
+# create a quantile vector of crim
+bins <- quantile(boston_scaled$crim)
+
+# create a categorical variable 'crime'
+crime <- cut(boston_scaled$crim, breaks = bins, labels = c("low", "med_low", "med_high", "high") ,include.lowest = TRUE)
+
+# look at the table of the new factor crime
+table(crime)
+
+# remove original crim from the dataset
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+
+# add the new categorical value to scaled data
+boston_scaled <- data.frame(boston_scaled, crime)
+
+
+```
+
+
+And finally the creation of train and test sets:
+
+
+```{r}
+# Divide the dataset to train and test sets, so that 80% of the data belongs to the train set
+ind <- sample(nrow(boston_scaled),  size = nrow(boston_scaled) * 0.8)
+train <- boston_scaled[ind,]
+test <- boston_scaled[-ind,]
+
+```
+
+
+
+## Fit the linear discriminant analysis on the train set
+
+
+```{r}
+# linear discriminant analysis
+lda.fit <- lda(crime ~ ., data = train)
+
+# print the lda.fit object
+lda.fit
+
+
+```
+
+
+
+```{r}
+# the function for lda biplot arrows
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# target classes as numeric
+classes <- as.numeric(train$crime)
+
+# plot the lda results
+plot(lda.fit, col = classes, pch = classes, dimen = 2)
+lda.arrows(lda.fit, myscale = 2)
+
+
+
+```
+
+
+## Predict the classes with the LDA model on the test data
+
+
+```{r}
+# save the crime categories from the test set
+# then remove the categorical crime variable from the test dataset
+correct_classes <- test$crime
+test <- dplyr::select(test, -crime)
+
+```
+
+
+Next predict the classes with the LDA model on the test data and cross tabulate the results with the crime categories from the test set.
+
+
+```{r}
+
+# predict classes with test data
+lda.pred <- predict(lda.fit, newdata = test)
+
+# cross tabulate the results
+table(correct = correct_classes, predicted = lda.pred$class)
+
+```
+
+
+Comments:
+
+
+##  Investigate what is the optimal number of clusters
+
+
+Reload the Boston dataset and standardize the dataset:
+
+
+```{r}
+library(MASS)
+data("Boston")
+
+# use the scale function
+boston_scaled2 <- as.data.frame(scale(Boston))
+boston_scaled2$crim <- as.numeric(boston_scaled2$crim)
+
+
+```
+
+
+
+Calculate the distances between the observations
+
+
+```{r}
+# euclidean distance matrix
+dist_eu <- dist(boston_scaled2)
+
+# look at the summary of the distances
+summary(dist_eu)
+
+# manhattan distance matrix
+dist_man <- dist(boston_scaled2, method = "manhattan")
+
+# look at the summary of the distances
+summary(dist_man)
+
+
+```
+
+
+Run k-means algorithm on the dataset. Investigate what is the optimal number of clusters and run the algorithm again:
+
+
+```{r}
+
+set.seed(14)
+
+# k-means clustering
+km <- kmeans(boston_scaled2, centers = 4)
+
+# plot the Boston dataset with clusters
+pairs(boston_scaled2, col = km$cluster)
+
+# determine the number of clusters
+k_max <- 10
+
+# calculate the total within sum of squares
+twcss <- sapply(1:k_max, function(k){kmeans(boston_scaled2, k)$tot.withinss})
+
+# visualize the results
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+
+# k-means clustering
+km <- kmeans(boston_scaled2, centers = 2)
+
+# plot the Boston dataset with clusters
+pairs(boston_scaled2, col = km$cluster)
+
+# create a more advanced plot matrix with ggpairs()
+ggpairs(boston_scaled2, mapping = aes(col = factor(km$cluster), alpha = 0.3), lower = list(combo = wrap("facethist", bins = 20)))
+
+
+```
+
+
+
+
+
+
