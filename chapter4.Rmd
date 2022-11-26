@@ -21,11 +21,10 @@ str(Boston)
 ```
 
 
-There are 506 observations and 14 variables in this data set. The data is formed from housing values in suburbs of Boston. For example the variable **crim** tells the per capita crime rate by town. 
+There are 506 observations and 14 variables in this data set from MASS-package. The data is formed from housing values in suburbs of Boston. For example the variable **crim** tells the per capita crime rate by town. 
 
 
 ## Graphical overview of the data
-
 
 
 ```{r}
@@ -50,16 +49,23 @@ facet_wrap(~variable, scales = "free")
 cor_matrix <- cor(Boston) %>% 
   round(., digits = 2)
 
-corrplot(cor_matrix, method="circle", type = "upper", cl.pos = "b", tl.pos = "d", tl.cex = 0.6)
-
+corrplot.mixed(cor_matrix)
 
 ```
 
 
+Summaries of the variables show that the scale varies a lot for the variables.
+
+
+When looking at the distributions of the variables, only the variable rm (average number of rooms per dwelling) is close to normal distribution and medv (median value of owner-occupied homes in 1000s) is somewhat normal. The variable of interest, crim, has most of the observations at the left tail as does the variable zn (proportion of residential land zoned for lots over 25,000 sq.ft). The reverse is true for the variable black (1000(Bk−0.63)^2 where Bk is the proportion of blacks by town). There are also few variables that have two peaks at their distribution; indus (proportion of non-retail business acres per town), rad (index of accessibility to radial highways) and tax (full-value property-tax rate per $10,000). Rest of the variables are skewed to left or right.
+
+
+Finally, when looking at the correlation plot, crim correlates (positively) the most with rad. Largest correlations overall can be found with nox and dis (-0.77) and with rad and tax(0.91). It seems like indus, nox, dis, rad and tax correlate the most with other variables. On the other hand the variable chas (Charles River dummy variable) doesn't really correlate with any variable.
 
 
 
-## Standardizing, creating a categorical variable and a train and test set
+
+## Standardizing data, creating a categorical variable and forming a train and test set
 
 
 First standardize the data set
@@ -76,7 +82,7 @@ summary(boston_scaled)
 ```
 
 
-The initial data had very wide range of values, so standardizing has normalized the range of the values.
+The initial data had very wide range of values for each variable and the sclales varied a lot depending on the variable, so standardizing has normalized the range of the values.
 
 
 Next the creation of a factor variable form the **crim** variable:
@@ -132,7 +138,7 @@ lda.fit
 
 ```{r}
 # the function for lda biplot arrows
-lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "navy", tex = 0.75, choices = c(1,2)){
   heads <- coef(x)
   arrows(x0 = 0, y0 = 0, 
          x1 = myscale * heads[,choices[1]], 
@@ -179,7 +185,8 @@ table(correct = correct_classes, predicted = lda.pred$class)
 ```
 
 
-Comments:
+The LDA model has predicted almost all the observations belonging to the high class correctly. On the lower end, there are few observations that have been predicted to the med_low instead of the correct low class. There is more variability in the predictions for the medium classes. The prediction for med_low has wrongly predicted for low class almost as much observations. So the LDA model has more difficulties in predicting the observations belonging in the middle than on the tails.
+
 
 
 ##  Investigate what is the optimal number of clusters
@@ -226,10 +233,10 @@ Run k-means algorithm on the dataset. Investigate what is the optimal number of 
 
 ```{r}
 
-set.seed(14)
+set.seed(17)
 
 # k-means clustering
-km <- kmeans(boston_scaled2, centers = 4)
+km <- kmeans(boston_scaled2, centers = 3)
 
 # plot the Boston dataset with clusters
 pairs(boston_scaled2, col = km$cluster)
@@ -243,17 +250,112 @@ twcss <- sapply(1:k_max, function(k){kmeans(boston_scaled2, k)$tot.withinss})
 # visualize the results
 qplot(x = 1:k_max, y = twcss, geom = 'line')
 
-# k-means clustering
+# optimal number of clusters seems to be 2, as there is a large drop at that point.
+# k-means clustering with two clusters
 km <- kmeans(boston_scaled2, centers = 2)
 
 # plot the Boston dataset with clusters
-pairs(boston_scaled2, col = km$cluster)
-
-# create a more advanced plot matrix with ggpairs()
-ggpairs(boston_scaled2, mapping = aes(col = factor(km$cluster), alpha = 0.3), lower = list(combo = wrap("facethist", bins = 20)))
+pairs(boston_scaled2, col = c("steelblue3", "sienna3")[km$cluster])
 
 
 ```
+
+
+Looking at the pairs function it appears that one of the clusters has always absorbed the observations on one end or direction, so that two clusters looks quite appropriate when comparing the plots of all the variables against each other.
+
+
+## Perform k-means on the original Boston data with some reasonable number of clusters 
+
+
+
+```{r}
+
+library(MASS)
+data("Boston")
+
+set.seed(19)
+
+# use the scale function to standardize the data
+boston_scaled2 <- as.data.frame(scale(Boston))
+boston_scaled2$crim <- as.numeric(boston_scaled2$crim)
+
+
+# k-means clustering with 4 clusters
+km <- kmeans(boston_scaled2, centers = 4)
+
+# linear discriminant analysis
+lda.fit2 <- lda(km$cluster ~ ., data = boston_scaled2)
+
+# print the lda.fit object
+lda.fit2
+
+# the function for lda biplot arrows
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "navy", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# target classes as numeric
+classes <- as.numeric(km$cluster)
+
+# plot the lda results
+plot(lda.fit2, col = classes, pch = classes, dimen = 2)
+lda.arrows(lda.fit2, myscale = 3)
+
+
+```
+
+
+There are 4 distinct clusters that are somewhat separate, but the 4th cluster has some of the observations in the middle of the plot, not clearly belonging to any cluster. Clusters 1 and 2 are close to each other as are clusters 3 and 4.
+
+
+It appears that rad, tax, age, dis and rm have the highest influence in separating the clusters.
+Looking at the arrows, tax and rad seem to be explaining more for cluster 4, and rm and dis more for cluster 2 for example.
+
+
+## Create a 3D plot
+
+
+```{r}
+# run the given code 
+
+model_predictors <- dplyr::select(train, -crime)
+# check the dimensions
+dim(model_predictors)
+dim(lda.fit$scaling)
+# matrix multiplication
+matrix_product <- as.matrix(model_predictors) %*% lda.fit$scaling
+matrix_product <- as.data.frame(matrix_product)
+
+library(plotly)
+
+#first plot
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers')
+
+# target classes as numeric
+classes <- as.numeric(train$crime)
+
+# color by classes
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', color = classes)
+
+# k-means clustering
+km <- kmeans(model_predictors, centers = 4)
+
+# target classes as numeric
+classes2 <- as.numeric(km$cluster)
+
+# color by km clusters
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', color = classes2)
+
+```
+
+
+All the plots have the same observations with most of the observations in a bigger groups and then a separate smaller group. The second plot that has the colors determined by crime classes has the separate smaller group belonging to one crime class. The third plot with the clusters has also the same smaller group in one cluster, but the lines between the clusters change a bit compared to the observations belonging to the crime classes.
+
 
 
 
