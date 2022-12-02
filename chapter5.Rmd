@@ -1,0 +1,18 @@
+
+# Dimensionality reduction techniques
+
+
+## graphical overview of the data 
+
+
+```{r}
+
+
+
+```
+
+
+
+
+
+
