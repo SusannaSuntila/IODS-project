@@ -6,13 +6,187 @@
 
 
 ```{r}
+# read in the created dataset
+human <- read.table(file.path(".", "data", "human.txt"))
 
+# summaries of the variables
+summary(human)
+
+# visualize the "human" variables
+library(GGally)
+ggpairs(human)
+
+
+# compute the correlation matrix and visualize it with corrplot
+library(corrplot)
+cor(human) %>% corrplot()
+
+```
+
+
+First looking at the summaries of the variables, the scale varies a lot depending on the variable. The Gross national income variable, GNI, has the largest scale, and on the other hand the relation of female over male in secondary education (Edu2.FM) and labor force participation (Labo.FM) have the smallest scale.
+
+
+The distributions differ somewhat as well. The Edu2.FM and Edu.Exp variables have a more normal distribution, compared to GNI, Mat.Mor and Ado.Birth, which have most of the observations at the left tail. Rest of the variables are slightly skewed.
+
+
+All of the variables have some statistically significant correlations with each other, which is necessary for the principal component analysis. Variables Parli.F and Labo.FM correlate the least with any other variable. Mat.Mor and Ado.Birth correlate negatively with the other variables, when the correlation is significant. Rest of the variables correlate mostly positively with each other.
+
+
+
+## PCA on the raw (non-standardized) data
+
+
+```{r}
+# perform principal component analysis (with the SVD method)
+pca_human <- prcomp(human)
+summary(pca_human)
+
+# how much variance each dimension explains
+library(factoextra)
+fviz_eig(pca_human, main = "Scree plot: raw data")
+
+# draw a biplot of the principal component representation and the original variables
+biplot(pca_human, choices = 1:2, cex = c(0.8, 1), col = c("darkslategray4", "darkslategrey"), sub = "Large scale of gross national income weighs against all else")
 
 
 ```
 
 
 
+## PCA on the standardized data
 
+
+```{r}
+# standardize the variables
+human_std <- scale(human)
+
+# print out summaries of the standardized variables
+summary(human_std)
+
+# perform principal component analysis (with the SVD method)
+pca_human_std <- prcomp(human_std)
+summary(pca_human_std)
+
+# proportion of variance explained
+library(factoextra)
+fviz_eig(pca_human_std, main = "Scree plot: standardized data")
+
+# draw a biplot of the principal component representation and the original variables
+biplot(pca_human_std, choices = 1:2, cex = c(0.8, 1), col = c("darkslategray4", "darkslategrey"),sub = "1: Human development vs maternal and reproductive inequalities, 2: Femle participation")
+
+
+```
+
+
+First looking at the standardized variables where all of them have a mean 0, GNI still has the largest maximum value, but now the large standard error is standardized.
+
+
+Looking at the raw data, the first principal component (PC1) captures 0.99% of the variance and the PC2 0.0001% of the variance. All the variance is captured by the first two PCs, principally only by the PC1. Comparing this to the standardized data where the first principal component captures 0.5361% of the variance and the PC2 0.1624%, it is not dominated by just one PC. Cumulatively these two capture almost 70% of the variance. The standard deviations are quite small, 2 for the PC1, compared to the raw data case, where he standard deviation for PC1 was very large, 18540, which was almost the exact standard deviation for GNI.
+
+
+Looking at the biplot of raw data, it is clear that for PC1, the GNI variable has a very large effect compared to all the other variables, and this effect takes over everything else. As noted in the beginning when looking at the summaries, GNI had a very large scale compared to all the variables. With the standardized data, other variables have more weight when the differing scales don't dominate. 
+
+
+## personal interpretations
+
+
+For PC1, there are two groups of variables that have an impact; on the other side the two variables that negatively correlated with others, Ado.Birth and Mat.Mor, and on the other side Edu2.FM, Life.Exp, Edu.Exp and GNI. These 4 correlated positively with each other, so they are all grouped on the left side. This dimension therefore is about human development vs maternal and reproductive inequalities.
+
+
+for PC2 the two variables that hardly correlated with any other variable, Labo.FM and Parli.F, form the third group. So this dimension is about female participation in government and labor force compared to men.
+
+
+## Multiple Correspondence Analysis (MCA) on the tea data
+
+
+```{r}
+# read in the data
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+tea <- read.csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/tea.csv", stringsAsFactors = TRUE)
+
+view(tea)
+str(tea)
+dim(tea)
+
+# column names to keep in the dataset
+keep_columns <- c("breakfast", "tea.time","lunch", "dinner", "evening", "frequency", "home", "work", "tearoom")
+
+# select the 'keep_columns' to create a new dataset
+tea_set <- select(tea, one_of(keep_columns))
+
+# look at the summaries and structure of the data
+summary(tea_set)
+str(tea_set)
+
+# visualize the dataset
+library(ggplot2)
+pivot_longer(tea_set, cols = everything()) %>% 
+  ggplot(aes(value)) + facet_wrap("name", scales = "free") +
+  geom_bar(fill = "deeppink4") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
+```
+
+
+There are 300 observations and 36 variables in this data set. I chose the following columns: breakfast, tea.time,lunch, dinner and evening to have the different times to drink tea, frequency of the tea drinking, and finally home, work and tearoom, so also few of the places as well where to drink tea. All of these variables are factors, most of them have just two levels (yes, no), but the frequancy variable has 4 levles.Breakfast and tea.time have more evenly divided amount of responses, but dinner, home, lunch and tearoom are quite concentrated on one side.
+
+
+```{r}
+library(FactoMineR)
+mca <- MCA(tea_set, graph = FALSE)
+
+# summary of the model
+summary(mca)
+
+# visualize MCA
+plot(mca, invisible=c("ind"), graph.type = "classic", habillage = "quali")
+
+
+
+```
+
+
+When looking at the summary, the first two dimensions compute about 30% of the variance. What can be seen in the bar plots of contributions (below this text) to the variance for dimensions 1-2, is that variables breakfast and frequency (levels 1 to 2/ week and 1 / day) are at the top. The four levels that had the least to contribute are Not.lunch, Not.work, Not.dinner and home. These are the same variables that had most of the answers from the two levels of a variable. As the dinner level for example had very few people, it is very far from the center in the MCA factor map for the first dimension.
+
+
+
+
+```{r}
+# another useful package
+library(factoextra)
+
+# Contributions of rows to dimension 1
+s1 <- fviz_contrib(mca, choice = "var", axes = 1, top = 20)
+# Contributions of rows to dimension 2
+s2 <- fviz_contrib(mca, choice = "var", axes = 2, top = 20)
+
+# combine the two plots
+library(patchwork)
+s1 | s2
+
+#The total contributions to dimension 1 and 2 are obtained as follow:
+fviz_contrib(mca, choice = "var", axes = 1:2, top = 20)
+
+
+```
+
+
+```{r}
+
+# color by contribution
+fviz_mca_var(mca, col.var = "contrib",
+             gradient.cols = c("springgreen1", "springgreen3", "darkgreen"), 
+             repel = TRUE, # avoid text overlapping (slow)
+             ggtheme = theme_minimal()
+             )
+
+
+```
+
+
+I think this last plot is quite demonstrative of the contributions.
 
 
