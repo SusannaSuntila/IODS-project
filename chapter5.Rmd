@@ -47,7 +47,7 @@ library(factoextra)
 fviz_eig(pca_human, main = "Scree plot: raw data")
 
 # draw a biplot of the principal component representation and the original variables
-biplot(pca_human, choices = 1:2, cex = c(0.8, 1), col = c("darkslategray4", "darkslategrey"), sub = "Large scale of gross national income weighs against all else")
+biplot(pca_human, choices = 1:2, cex = c(0.8, 1), col = c("darkslategray4", "darkslategrey"), sub = "Large variance of gross national income weighs against all else")
 
 
 ```
@@ -73,7 +73,7 @@ library(factoextra)
 fviz_eig(pca_human_std, main = "Scree plot: standardized data")
 
 # draw a biplot of the principal component representation and the original variables
-biplot(pca_human_std, choices = 1:2, cex = c(0.8, 1), col = c("darkslategray4", "darkslategrey"),sub = "1: Human development vs maternal and reproductive inequalities, 2: Femle participation")
+biplot(pca_human_std, choices = 1:2, cex = c(0.8, 1), col = c("darkslategray4", "darkslategrey"), ylab = "PC2 \n Femle participation", xlab = "PC1  \n Human development vs maternal and reproductive inequalities")
 
 
 ```
