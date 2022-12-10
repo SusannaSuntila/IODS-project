@@ -288,7 +288,7 @@ library(tidyr)
 # Summary data with mean and standard error of bprs by treatment and week 
 BPRSS <- BPRSL %>%
   group_by(treatment, week) %>%
-  summarise( mean = mean(bprs), se = sd(bprs)/sqrt(mean(bprs)) ) %>%
+  summarise( mean = mean(bprs), se = sd(bprs)/sqrt(n) ) %>%
   ungroup()
 
 # Glimpse the data
@@ -578,7 +578,6 @@ ggplot(RATSL, aes(x = Time, y = Weight, group = ID)) +
   scale_x_continuous(name = "Time (days)", breaks = seq(0, 60, 10)) +
   scale_y_continuous(name = "Weight (grams)") +
   theme(legend.position = "top")
-
 
 
 
