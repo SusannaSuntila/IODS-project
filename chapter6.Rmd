@@ -1,5 +1,5 @@
 
-# Aanalysis of longitudinal data
+# Analysis of longitudinal data
 
 
 ## Meet and repeat part I
@@ -29,14 +29,17 @@ str(RATSL) # now they are factors again
 summary(RATSL)
 
 
+
 ```
+
+
+There are 16 IDs, so 16 rats that were studied, and they were divided into 3 different groups (group 1 has 8 rats, the other two have 4 rats each). Time goes from day 1 to day 64.
 
 
 ```{r}
 library(ggplot2)
-
 # Draw the plot of different groups
-ggplot(RATSL, aes(x = Time, y = Weight, col = ID)) +
+ggplot(RATSL, aes(x = Time, y = Weight, col = ID, linetype = ID)) +
   geom_line() +
   scale_linetype_manual(values = rep(1:8, times = 2)) +
   facet_grid(. ~ Group, labeller = label_both) +
@@ -46,6 +49,9 @@ ggplot(RATSL, aes(x = Time, y = Weight, col = ID)) +
 
 
 ```
+
+
+Group 1 has rats whose weight is much lower over time compared to groups 2 and 3. Also each group has one outlier, with group 2's being the most visible.
 
 
 ### The Golden Standardise
@@ -65,7 +71,6 @@ glimpse(RATSL)
 
 # Plot again with the standardised Weights
 library(ggplot2)
-
 ggplot(RATSL, aes(x = Time, y = stdWeight, col = ID)) +
   geom_line() +
   scale_linetype_manual(values = rep(1:8, times = 2)) +
@@ -78,17 +83,19 @@ ggplot(RATSL, aes(x = Time, y = stdWeight, col = ID)) +
 ```
 
 
+Standardizing the weights of the rats has made the lines over time less steep especially for group 2 and 3. Group 1 has quite level lines over time, group 2 has some mixed effects and interestingly for group 3 there seems to be a slight downward trend. Standardizing also demonstrates that one ID is deviating from other observations in each group.
+
 
 ### Summary graphs
 
 
 ```{r}
-# Number of subjects (per group):
+# Number of IDs:
 n <- 16
 
 library(dplyr)
 library(tidyr)
-# Summary data with mean and standard error of bprs by treatment and week 
+# Summary data with mean and standard error of Weight by Group and Time 
 RATSS <- RATSL %>%
   group_by(Group, Time) %>%
   summarise( mean = mean(Weight), se = sd(Weight)/sqrt(n) ) %>%
@@ -110,6 +117,9 @@ ggplot(RATSS, aes(x = Time, y = mean, linetype = Group, col = Group, shape = Gro
 
 
 ```
+
+
+The summary graph again shows the large difference between group 1 and groups 2 and 3. There is some small upward trend over time observable in this graph as well.
 
 
 ### Find out the outlier
@@ -152,7 +162,10 @@ ggplot(RATSL8S1, aes(x = Group, y = mean)) +
 ```
 
 
-# ANOVA
+The first box plot of means shows the one outlier that each group has, most significantly for group 2. When removing these three outliers, the boxes are very compressed for each group and each group clearly differs from each other, especially groups 2 and 3 now as well.
+
+
+### ANOVA
 
 
 ```{r}
@@ -169,7 +182,13 @@ anova(fit)
 ```
 
 
+As there are three groups, analysis of variance is used instead of t-test. The analysis of variance confirms the fact that all of the three groups have different means, as the p-value of the test is very small and so the test is highly significant.
+
+
 ## Meet and Repeat: PART II
+
+
+### Load in and plot the data
 
 
 ```{r}
@@ -181,9 +200,9 @@ BPRSL <- read.table(file.path(".", "data", "BPRSL.txt"))
 names(BPRSL)
 
 # Look at the structure of BPRSL
-str(BPRSL) # ID and Group aren't factors anymore
+str(BPRSL) # treatment and subject aren't factors anymore
 
-# change ID and Groups back to factors
+# change treatment and subject back to factors
 BPRSL$treatment <- factor(BPRSL$treatment)
 BPRSL$subject <- factor(BPRSL$subject)
 
@@ -196,7 +215,7 @@ summary(BPRSL)
 ```
 
 
-### Plot the data
+There are 20 men in treatment 1 and 20 men in treatment 2, who were observed over 8 weeks and each subject was rated on the brief psychiatric rating scale (BPRS) every week and once before the treatment began.
 
 
 ```{r}
@@ -216,6 +235,9 @@ ggplot(BPRSL, aes(x = week, y = bprs, linetype = treatment, color = treatment)) 
 ```
 
 
+Both groups have a downward trend, but there doesn't seem to be a difference between the treatments when looking at this plot. I have included the week 0 here as well.
+
+
 ### Holding on to independence: The Linear model
 
 
@@ -228,6 +250,26 @@ summary(BPRS_reg)
 
 
 ```
+
+
+In this first model it is assumed that the repeated measures of the bprs are independent of each other (which is not really the case), and here the coefficient for variable week is significant, but the coefficient for treatment is not. The treatment variable is now a dummy that has a value 1 when the subject belongs to group 2, so the coefficient tells the difference between the groups. Keeping everything else constant, a one week change is associated with -2.27 change in bprs points.
+
+
+```{r}
+# create a regression model BPRSL_reg with week 0 removed
+BPRSLtr <- BPRSL %>%
+  subset(week > 0)
+
+BPRS_reg0 <- lm(bprs ~ week + treatment, data = BPRSLtr)
+
+# print out a summary of the model
+summary(BPRS_reg0)
+
+
+```
+
+
+I also wanted to see the regression without the week 0, which can be considered baseline. Now the treatment difference is a bit smaller interestingly and the is a very small change in the week coefficient as well. But as the results were very similar I decided to continue the analysis with all the weeks included.
 
 
 ### The Random Intercept Model
@@ -243,9 +285,10 @@ BPRS_ref <- lmer(bprs ~ week + treatment + (1 | subject), data = BPRSL, REML = F
 # Print the summary of the model
 summary(BPRS_ref)
 
-
-
 ```
+
+
+In this model the intercept can differ for each subject. The estimated variance of the subject random effects is not very large, so there is not much variation in the intercepts of the regression fits for each subject profile. The coefficients for week and treatment do not change in this model compared to the first linear model. Standard errors are slightly smaller, as the within-subject dependencies are taken into account.
 
 
 ### Random Intercept and Random Slope Model
@@ -263,6 +306,10 @@ anova(BPRS_ref1, BPRS_ref)
 
 
 ```
+
+
+Fitting a random intercept and random slope model makes it possible for the linear regression fits for each subject to differ in intercept but also in slope. So it takes into account the differences in each subject's profile of answers, but also the effect of time. In this model the variance for the intercept of subject is a bit larger than in the mere random intercept model and the estimated variance for week random effects is very small. The coefficients of the model do not really change. When testing the fit of the random intercept model against the random intercept and random slope model, the latter is slightly better, with the ANOVA test being significant at the 5% level.
+
 
 
 ### Random Intercept and Random Slope Model with interaction
@@ -304,16 +351,15 @@ ggplot(BPRSL, aes(x = week, y = Fitted, linetype = treatment, color = treatment)
   theme(legend.position = "top")
 
 
-
-
 ```
 
 
+In this last model an interaction term with week and treatment is included. Looking at the coefficient, the slopes are lower for treatment 2 compared to treatment 1, as the interaction term's coefficient is positive 0.7, but the coefficient for week is negative. The likelihood ratio test of this model against the similar model without an interaction term is quite small, 3.12 with 1 df, and it is statistically significant only at the 10% level.
+
+
+I used the fitted values from the last model even though there wasn't much improvement. The plotted fitted values show that there is a downward trend over time but not between the treatments.
 
 
 
-
-
-
-
+**Thank You!**
 
